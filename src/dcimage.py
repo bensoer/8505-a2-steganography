@@ -11,7 +11,7 @@ class DCImage:
     def __init__(self, imageDir):
         self.__imageDir = imageDir
 
-        self.__pilImage = Image.open(r"%s" % self.__imageDir)
+        self.__pilImage = Image.open(r"%s" % imageDir)
         self.__pilImage = self.__pilImage.convert("RGB")
 
     def canHoldImage(self, dataImage):

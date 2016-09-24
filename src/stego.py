@@ -1,8 +1,6 @@
 import logging
 import sys
 
-from PIL import Image
-
 from src.dcimage import DCImage
 from src.dcstego import DCStego
 from src.utils.argparcer import ArgParcer
@@ -12,7 +10,7 @@ logger = logging.getLogger("stego")
 logger.setLevel(logging.DEBUG)
 #console logging channel
 ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
+ch.setLevel(logging.INFO)
 
 formatter = logging.Formatter('%(asctime)s(%(levelname)s) - %(message)s', "%H:%M:%S")
 ch.setFormatter(formatter)
@@ -23,8 +21,12 @@ mode = ArgParcer.getValue(sys.argv, "-m") # mode can be either 'stego' or 'unste
 carrierImgDir = ArgParcer.getValue(sys.argv, "-c") # dir path to the carrier image
 dataImgDir = ArgParcer.getValue(sys.argv, "-d") # dir path to the data image - this image will be hidden into the carrier
 
+if ArgParcer.keyExists(sys.argv, "--DEBUG"):
+    ch.setLevel(logging.DEBUG)
+
 if mode == 'stego':
 
+    logger.info("Stego Mode Selected. Checking Images")
     dataImage = DCImage(dataImgDir)
     carrierImage = DCImage(carrierImgDir)
 
@@ -32,19 +34,27 @@ if mode == 'stego':
         logger.error("Stego - Image Sizes Are Not Compatable. Can't Stego The Data Image Into The Carrier. Aborting\n")
         exit(0)
 
+    logger.info("Parsing Data Image Into The Carrier...")
     dcStegoManager = DCStego(carrierImage)
     dcStegoManager.addDataPixelImage(dataImage)
 
+    logger.info("Parsing Complete. Exporting...")
     stegoImage = dcStegoManager.getCarrierImage()
-    stegoImage.save("../imgs/stego.gif")
+    stegoImage.save("../imgs/stego.png")
 
 elif mode == 'unstego':
-    print("Nothing Set Here!")
+
+    logger.info("UnStego Mode Selected. Fetching Images")
+    carrierImage = DCImage(carrierImgDir)
+
+    dcStegoManager = DCStego(carrierImage)
+    dcStegoManager.parseDataPixelImage()
+
 else:
     logger.error("Stego - No Valid Option Selected. Please Try Again")
     exit(0)
 
-#Start Parsing Images
+logger.info("Process Complete")
 
 
 
