@@ -59,4 +59,19 @@ class DCUtils:
         # now from this max subtract header data space needed
         maxDataBytes = maxDataBytes - math.ceil((bitsToRepresentMaxDataBytes / 8)) # round up so that more is taken for header
 
+        maxTotalWidthOrHeightPixels, bitsToRepresentMaxHeightOrWidthPixels = DCUtils.calculateMaxWidthAndHeight(
+            maxDataBytes)
+
+        bytesToRepresentMaxHeightOrWidthPixels = math.ceil(bitsToRepresentMaxHeightOrWidthPixels / 8)
+        maxDataBytes = maxDataBytes - (bytesToRepresentMaxHeightOrWidthPixels * 2) # *2 for storing both width and height parameters
+
         return (maxDataBytes, bitsToRepresentMaxDataBytes)
+
+    @staticmethod
+    def calculateMaxWidthAndHeight(maxDataBytes):
+
+        maxTotalWidthOrHeightPixels = math.ceil(maxDataBytes / 3)
+
+        bitToRepresentMaxHeightOrWidth = math.ceil(math.log2(maxTotalWidthOrHeightPixels))
+
+        return (maxTotalWidthOrHeightPixels, bitToRepresentMaxHeightOrWidth)

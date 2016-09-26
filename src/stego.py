@@ -11,10 +11,10 @@ logger.setLevel(logging.DEBUG)
 #console logging channel
 ch = logging.StreamHandler()
 ch.setLevel(logging.INFO)
-
 formatter = logging.Formatter('%(asctime)s(%(levelname)s) - %(message)s', "%H:%M:%S")
 ch.setFormatter(formatter)
 logger.addHandler(ch)
+
 
 # Parse Command Arguments
 mode = ArgParcer.getValue(sys.argv, "-m") # mode can be either 'stego' or 'unstego'
@@ -25,6 +25,11 @@ if ArgParcer.keyExists(sys.argv, "--DEBUG"):
     ch.setLevel(logging.DEBUG)
 
 if mode == 'stego':
+
+    fh = logging.FileHandler("stego.log")
+    fh.setLevel(logging.DEBUG)
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
 
     logger.info("Stego Mode Selected. Checking Images")
     dataImage = DCImage(dataImgDir)
@@ -44,11 +49,19 @@ if mode == 'stego':
 
 elif mode == 'unstego':
 
+    fh = logging.FileHandler("unstego.log")
+    fh.setLevel(logging.DEBUG)
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
+
     logger.info("UnStego Mode Selected. Fetching Images")
     carrierImage = DCImage(carrierImgDir)
 
     dcStegoManager = DCStego(carrierImage)
-    dcStegoManager.parseDataPixelImage()
+    dcDataImage = dcStegoManager.parseDataPixelImage()
+
+    image = dcDataImage.getPilImage()
+    image.save("../imgs/unstego.png")
 
 else:
     logger.error("Stego - No Valid Option Selected. Please Try Again")

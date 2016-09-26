@@ -30,3 +30,12 @@ class DCImage:
     def getPilHeight(self):
         width, height = self.__pilImage.size
         return height
+
+    @staticmethod
+    def createNewImage(height, width, savedir=r"../imgs/dataImage.png"):
+
+        # creates a plain ol' white image
+        image = Image.new("RGB", (width, height), (0, 0, 0))
+        image.save(savedir)
+
+        return DCImage(savedir)

@@ -45,3 +45,4 @@ fabric.properties
 
 /imgs
 __pycache__/
+*.log
