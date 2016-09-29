@@ -42,6 +42,7 @@ if mode == 'stego':
     if dataImage.getImageNameLength() > 30:
         logger.error("Stego. The Name Of The Data Image (Including Extension) Is Longer Then 30 Characters. Please "
             + "rename the file to contain less then 30 characters")
+        exit(0)
 
     logger.info("Parsing Data Image Into The Carrier...")
     dcStegoManager = DCStego(carrierImage)
