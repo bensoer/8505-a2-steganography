@@ -1,8 +1,11 @@
 from PIL import Image
-
 from src.dcutils import DCUtils
+from Crypto.Cipher import DES3
+from Crypto import Random
 
 import ntpath
+import io
+
 
 
 class DCImage:
@@ -21,6 +24,33 @@ class DCImage:
         head, tail = ntpath.split(imageDir)
         self.__imageName = tail or ntpath.basename(head)
         self.__imageName = self.__imageName.replace(" ", "")
+
+    def encryptImage(self, password="Sixteen byte key"):
+
+        # password must be 16 bytes OR 16 characters long
+
+        iv = Random.new().read(DES3.block_size)
+        cipher = DES3.new(password.encode(), DES3.MODE_OFB, iv)
+
+        bytesOfImage = self.__pilImage.tobytes()
+        imageSize = self.__pilImage.size
+        encryptedImage = iv + cipher.encrypt(bytesOfImage)
+
+        self.__pilImage = Image.frombytes("RGB", imageSize, encryptedImage)
+
+        self.__pilImage.show()
+
+    def decryptImage(self, password="Sixteen byte key"):
+
+        bytesOfImage = self.__pilImage.tobytes()
+        imageSize = self.__pilImage.size
+
+        iv = bytesOfImage[:DES3.block_size]
+        cipher = DES3.new(password.encode(), DES3.MODE_OFB, iv)
+        decryptedImage = cipher.decrypt(bytesOfImage[DES3.block_size:])
+
+        #self.__pilImage = Image.frombytes("RGB", imageSize, decryptedImage)
+        self.__pilImage = Image.open(io.BytesIO(decryptedImage))
 
     def getImageNameLength(self):
         return len(self.__imageName)

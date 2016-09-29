@@ -33,6 +33,7 @@ if mode == 'stego':
 
     logger.info("Stego Mode Selected. Checking Images")
     dataImage = DCImage(dataImgDir)
+    #dataImage.encryptImage()
     carrierImage = DCImage(carrierImgDir)
 
     if carrierImage.canHoldImage(dataImage) == False:
@@ -64,6 +65,7 @@ elif mode == 'unstego':
 
     dcStegoManager = DCStego(carrierImage)
     dcDataImage = dcStegoManager.parseDataPixelImage()
+    #dcDataImage.decryptImage()
 
     image = dcDataImage.getPilImage()
     image.save(dcDataImage.getImageName())
