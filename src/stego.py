@@ -44,8 +44,8 @@ if mode == 'stego':
     dcStegoManager.addDataPixelImage(dataImage)
 
     logger.info("Parsing Complete. Exporting...")
-    stegoImage = dcStegoManager.getCarrierImage()
-    stegoImage.save("../imgs/stego.png")
+    dcStegoImage = dcStegoManager.getCarrierImage()
+    dcStegoImage.getPilImage().save(dcStegoImage.getImageName())
 
 elif mode == 'unstego':
 
@@ -61,7 +61,7 @@ elif mode == 'unstego':
     dcDataImage = dcStegoManager.parseDataPixelImage()
 
     image = dcDataImage.getPilImage()
-    image.save("../imgs/unstego.png")
+    image.save(dcDataImage.getImageName())
 
 else:
     logger.error("Stego - No Valid Option Selected. Please Try Again")

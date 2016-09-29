@@ -145,16 +145,72 @@ class DCStego:
         logger.debug("Binary Of TotalDataHeight: " + bin(totalDataHeight))
         logger.debug("Binary Before Processing: " + binaryBeforeProcessing)
 
+        # ---- DECODING FILENAME ----
+
+        # make sure its always 30 characters without spaces
+        # = 240 bits
+        # = 80 carrier pixels
+        fileName = ""
+
+        nx = hx + 1
+        ny = hy
+
+        while nx >= carrierWidth:
+            nx = abs(nx - carrierWidth)
+            ny = ny + 1
+
+        offsetInPixel = 0
+
+        for byte in range(0,30):
+            fileNameByte = 0
+            for i in range(0, 7):
+
+                fileNameByte <<= 1
+
+                carrierPixel = carrierPixels[nx, ny]
+                cred, cgreen, cblue = carrierPixel
+                pixelList = [cred, cgreen, cblue]
+
+                plane = pixelList[offsetInPixel]
+                lsb = (plane & 1)
+
+                logger.debug("Parsing MSB Of: " + str(lsb) + " At Index: X: " + str(nx) + " Y: " + str(ny) + " Offset: " + str(offsetInPixel))
+
+                if lsb == 1:
+                    fileNameByte |= 1
+                else:
+                    fileNameByte &= ~1
+
+                logger.debug("Created Number Of: " + str(fileNameByte) + " ( Binary: " + bin(fileNameByte) + " )")
+
+                offsetInPixel = offsetInPixel + 1
+                if offsetInPixel == 3:
+                    nx = nx + 1
+                    offsetInPixel = 0
+
+                if nx >= carrierWidth:
+                    nx = 0
+                    ny = ny + 1
+
+            logger.debug("Parsing Found Number Of: " + str(fileNameByte))
+            logger.debug("Parsing Found Number In Binary As: " + bin(fileNameByte))
+            logger.debug("Parsing Name Found Letter: " + chr(fileNameByte))
+            fileName += chr(fileNameByte)
+            logger.debug("Total FileName As This Point Is: >" + fileName + "<")
+
+        fileName = fileName.replace(" ", "")
+        logger.debug("FileName After Cleaning: >" + fileName + "<")
+
         # check if ex +1 is too far
-        if (hx + 1) > carrierWidth:
-            hx = 0
-            hy = hy +1
+        if (nx + 1) > carrierWidth:
+            nx = 0
+            ny = ny +1
         else:
-            hx = hx + 1
+            nx = nx + 1
 
-        return (hx, hy, totalDataBytes, totalDataWidth, totalDataHeight)
+        return (nx, ny, totalDataBytes, totalDataWidth, totalDataHeight, fileName)
 
-    def __addHeaderInformation(self, totalDataBytes, totalWidthPixels, totalHeightPixels):
+    def __addHeaderInformation(self, totalDataBytes, totalWidthPixels, totalHeightPixels, fileName):
 
         logger.debug(" -- PROCESING HEADER INFORMATION INTO CARRIER -- ")
         logger.debug("Total Bytes In Data Image Is: " + str(totalDataBytes) + ". This Number Will Be Placed Into The"
@@ -339,13 +395,69 @@ class DCStego:
         logger.debug("Binary Before Processing: " + binaryBeforeProcessing)
         logger.debug("Binary After Processing: " + binaryAfterProcessing)
 
+        # ---- ENCODE FILENAME ----
+
+        # make sure its always 30 characters without spaces
+        # = 240 bits
+        # = 80 carrier pixels
+        fileName = fileName.replace(" ", "")
+        while len(fileName) < 30:
+            fileName += " "
+
+        #fileNameBytes = fileName.encode()
+        nx = hx + 1
+        ny = hy
+
+        while nx >= carrierWidth:
+            nx = abs(nx - carrierWidth)
+            ny = ny + 1
+
+        offsetInPixel = 0
+
+        for letter in fileName:
+            logger.debug("Processing Letter: " + letter)
+            logger.debug("As ASCII That Is Number: " + str(ord(letter)))
+            logger.debug("As Binary The Number IS: " + bin(ord(letter)))
+
+            ordinal = ord(letter)
+
+            for i in range(6,-1, -1):
+                msb = (ordinal >> i) & 1
+
+                logger.debug("Placing MSB Of: " + str(msb) + " At Index: X " + str(nx) + " Y " + str(ny) + " Offset: " + str(offsetInPixel))
+
+                carrierPixel = carrierPixels[nx,ny]
+                cred, cgreen, cblue = carrierPixel
+                pixelList = [cred,cgreen,cblue]
+
+                plane = pixelList[offsetInPixel]
+
+                if msb == 1:
+                    plane |= 1
+                else:
+                    plane &= ~1
+
+                pixelList[offsetInPixel] = plane
+                carrierPixel = (pixelList[0], pixelList[1], pixelList[2])
+                carrierPixels[nx,ny] = carrierPixel
+
+                offsetInPixel = offsetInPixel + 1
+                if offsetInPixel == 3:
+                    nx = nx +1
+                    offsetInPixel = 0
+
+                if nx >= carrierWidth:
+                    nx = 0
+                    ny = ny + 1
+
+
 
         # check if sx +1 is too far
-        if (hx + 1) >= carrierWidth:
-            hx = 0
-            hy = hy + 1
+        if (nx + 1) >= carrierWidth:
+            nx = 0
+            ny = ny + 1
         else:
-            hx = hx + 1
+            nx = nx + 1
 
         # now return the results, giving the pixel coordinates to the start position of the image data
 
@@ -353,7 +465,7 @@ class DCStego:
         logger.debug(" -- END OF PROCESING HEADER INFORMATION INTO CARRIER -- ")
         #logger.setLevel(logging.INFO)
 
-        return (hx, hy)
+        return (nx, ny)
 
 
     def addDataPixelImage(self, dcDataImage):
@@ -365,7 +477,7 @@ class DCStego:
 
         #add header information about the data image so we know how much to parse
         totalDataBytes = dcDataImage.getPilWidth() * dcDataImage.getPilHeight() * 3
-        cx, cy = self.__addHeaderInformation(totalDataBytes, dcDataImage.getPilWidth(), dcDataImage.getPilHeight()) #adding header will return index to start inputting data at
+        cx, cy = self.__addHeaderInformation(totalDataBytes, dcDataImage.getPilWidth(), dcDataImage.getPilHeight(), dcDataImage.getImageName()) #adding header will return index to start inputting data at
 
         dataPixels = dcDataImage.getPixelAccess()
         logger.debug("DataPixel Width: " + str(dcDataImage.getPilWidth()))
@@ -450,32 +562,26 @@ class DCStego:
                     else:
                         cx = cx + 3
 
-    '''
-                            # if the carrier's lsb already matches the lsb of the data plane, don't do anything
-                            if (carriers[i] & 1) != lsb:
-                                if (carriers[i] & 1) == 1:
-                                    #the carrier has a 1 which means our lsb is 0. decrement carrier value
-                                    carriers[i] = carriers[i] - 1
-                                else:
-                                    #the carrier has a 0 which means our lsb is a 1. increment the carrier value
-                                    carriers[i] = carriers[i] + 1
-    '''
 
     def parseDataPixelImage(self):
 
         carrierPixels = self.__dcCarrierImage.getPixelAccess()
         carrierHeight = self.__dcCarrierImage.getPilHeight()
         carrierWidth = self.__dcCarrierImage.getPilWidth()
-        cx, cy, totalDataBytes, totalDataWidth, totalDataHeight = self.__getHeaderInformation()
+        cx, cy, totalDataBytes, totalDataWidth, totalDataHeight, fileName = self.__getHeaderInformation()
 
         logger.info("The Total Bytes In The Data Image Is: " + str(totalDataBytes))
         logger.info("The Total Width In Pixels of The Data Image Is: " + str(totalDataWidth))
         logger.info("The Total Height In Pixels of The Data Image Is: " + str(totalDataHeight))
+        logger.info("The File Name Is: " + fileName)
         logger.debug("Data Image Starts At Index X: " + str(cx) + ", Y: " + str(cy))
 
+        logger.info("Creating Image Placeholder")
         # create a new image
-        dataImage = DCImage.createNewImage(totalDataHeight, totalDataWidth)
+        dataImage = DCImage.createNewImage(totalDataHeight, totalDataWidth, savedir=fileName)
         dataPixels = dataImage.getPixelAccess()
+
+        logger.info("Now Parsing Image...")
 
         for dy in range(0, totalDataHeight):
             for dx in range(0, totalDataWidth):
@@ -557,4 +663,4 @@ class DCStego:
 
 
     def getCarrierImage(self):
-        return self.__dcCarrierImage.getPilImage()
+        return self.__dcCarrierImage

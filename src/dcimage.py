@@ -2,17 +2,25 @@ from PIL import Image
 
 from src.dcutils import DCUtils
 
+import ntpath
+
 
 class DCImage:
 
     __imageDir = ''
     __pilImage = None
+    __imageName = ''
 
     def __init__(self, imageDir):
         self.__imageDir = imageDir
 
         self.__pilImage = Image.open(r"%s" % imageDir)
         self.__pilImage = self.__pilImage.convert("RGB")
+
+        # get the image name from the dir
+        head, tail = ntpath.split(imageDir)
+        self.__imageName = tail or ntpath.basename(head)
+
 
     def canHoldImage(self, dataImage):
         return DCUtils.isLargeEnoughImg(self.__pilImage, dataImage.getPilImage())
@@ -30,6 +38,9 @@ class DCImage:
     def getPilHeight(self):
         width, height = self.__pilImage.size
         return height
+
+    def getImageName(self):
+        return self.__imageName
 
     @staticmethod
     def createNewImage(height, width, savedir=r"../imgs/dataImage.png"):
