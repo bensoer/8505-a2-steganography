@@ -65,6 +65,8 @@ class DCUtils:
         bytesToRepresentMaxHeightOrWidthPixels = math.ceil(bitsToRepresentMaxHeightOrWidthPixels / 8)
         maxDataBytes = maxDataBytes - (bytesToRepresentMaxHeightOrWidthPixels * 2) # *2 for storing both width and height parameters
 
+        maxDataBytes = maxDataBytes - 30 # 30 bytes for 30 character max for data file names
+
         return (maxDataBytes, bitsToRepresentMaxDataBytes)
 
     @staticmethod

@@ -20,7 +20,10 @@ class DCImage:
         # get the image name from the dir
         head, tail = ntpath.split(imageDir)
         self.__imageName = tail or ntpath.basename(head)
+        self.__imageName = self.__imageName.replace(" ", "")
 
+    def getImageNameLength(self):
+        return len(self.__imageName)
 
     def canHoldImage(self, dataImage):
         return DCUtils.isLargeEnoughImg(self.__pilImage, dataImage.getPilImage())
