@@ -1,16 +1,18 @@
 import logging
 import math
-from src.dcutils import DCUtils
-from src.dcimage import DCImage
+from dcutils import DCUtils
+from dcimage import DCImage
 
 logger = logging.getLogger("stego")
 
 class DCStego:
 
     __dcCarrierImage = None
+    __encryptionOffset = 0
 
-    def __init__(self, dcCarrierImage):
+    def __init__(self, dcCarrierImage, encryptionOffset = 0):
         self.__dcCarrierImage = dcCarrierImage
+        self.__encryptionOffset = encryptionOffset
 
     def __getHeaderInformation(self):
 
@@ -467,6 +469,42 @@ class DCStego:
 
         return (nx, ny)
 
+    def __encryptPixel(self, pixel):
+        pred, pgreen, pblue = pixel
+
+        pred = pred + self.__encryptionOffset
+        pgreen = pgreen + self.__encryptionOffset
+        pblue = pblue + self.__encryptionOffset
+
+
+        if pred > 255:
+            pred = 0 + abs(pred - 256)
+
+        if pgreen > 255:
+            pgreen = 0 + abs(pgreen - 256)
+
+        if pblue > 255:
+            pblue = 0 + abs(pblue - 256)
+
+        return (pred, pgreen, pblue)
+
+    def __decryptPixel(self, pixel):
+        pred, pgreen, pblue = pixel
+
+        pred = pred - self.__encryptionOffset
+        pgreen = pgreen - self.__encryptionOffset
+        pblue = pblue - self.__encryptionOffset
+
+        if pred < 0:
+            pred = 256 + pred
+
+        if pgreen < 0:
+            pgreen = 256 + pgreen
+
+        if pblue < 0:
+            pblue = 256 + pblue
+
+        return (pred, pgreen, pblue)
 
     def addDataPixelImage(self, dcDataImage):
 
@@ -490,8 +528,9 @@ class DCStego:
 
                 dataPixel = dataPixels[dx, dy]
                 logger.debug("Data Pixel Value: " + str(dataPixel) + " at position: X: " + str(dx) + " Y: " + str(dy))
+                dataPixel = self.__encryptPixel(dataPixel)
                 dred, dgreen, dblue = dataPixel
-                pixelList = [dred, dgreen,dblue]
+                pixelList = [dred, dgreen, dblue]
 
                 for index, plane in enumerate(pixelList):
 
@@ -654,6 +693,7 @@ class DCStego:
                 # put the planes back into their pixel
                 dataPixel = (pixelList[0], pixelList[1], pixelList[2])
                 logger.debug("Data Pixel Value: " + str(dataPixel) + " at position: X: " + str(dx) + " Y: " + str(dy))
+                dataPixel = self.__decryptPixel(dataPixel)
                 # put the pixel back into the image
                 dataPixels[dx,dy] = dataPixel
 

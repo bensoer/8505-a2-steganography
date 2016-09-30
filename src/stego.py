@@ -1,9 +1,9 @@
 import logging
 import sys
 
-from src.dcimage import DCImage
-from src.dcstego import DCStego
-from src.utils.argparcer import ArgParcer
+from dcimage import DCImage
+from dcstego import DCStego
+from utils.argparcer import ArgParcer
 
 # Setup Logging
 logger = logging.getLogger("stego")
@@ -16,10 +16,34 @@ ch.setFormatter(formatter)
 logger.addHandler(ch)
 
 
+def printHelp():
+    logger.info("Image Steganography Program By Ben Soer")
+    logger.info("-------------------------------")
+    logger.info("Usage:")
+    logger.info("       python3 src/stego.py -m <mode> -c <carrierimg> [-d <dataimg>] [-o <outputimg>] [-e <encryptionoffset>]")
+    logger.info ("Flags:")
+    logger.info("       -m      Mode. Can either be 'stego' or 'unstego'. 'stego' is for merging images. 'unstego' is for parsing out images")
+    logger.info("       -c      Carrier Image. Dir To The Carrier Image")
+    logger.info("       -d      Data Image. Dir To The Data Image")
+    logger.info("       -o      Output Image. Dir And Name For The Output Image. Only valid in 'stego' mode")
+    logger.info("       -e      Encryption Offset. Integer offset for encryption data image. Offset in 'unstego' mode must match that of offset during 'stego' mode")
+    logger.info("-------------------------------")
+
+if len(sys.argv) <= 2 or ArgParcer.keyExists(sys.argv,"--HELP"):
+    printHelp()
+    exit(0)
+
 # Parse Command Arguments
 mode = ArgParcer.getValue(sys.argv, "-m") # mode can be either 'stego' or 'unstego'
 carrierImgDir = ArgParcer.getValue(sys.argv, "-c") # dir path to the carrier image
 dataImgDir = ArgParcer.getValue(sys.argv, "-d") # dir path to the data image - this image will be hidden into the carrier
+outputFileName = ArgParcer.getValue(sys.argv, "-o")
+encryptionOffset = 0
+try:
+    encryptionOffset = int(ArgParcer.getValue(sys.argv, "-e"))
+except:
+    encryptionOffset = 0
+
 
 if ArgParcer.keyExists(sys.argv, "--DEBUG"):
     ch.setLevel(logging.DEBUG)
@@ -46,12 +70,16 @@ if mode == 'stego':
         exit(0)
 
     logger.info("Parsing Data Image Into The Carrier...")
-    dcStegoManager = DCStego(carrierImage)
+    dcStegoManager = DCStego(carrierImage, encryptionOffset)
     dcStegoManager.addDataPixelImage(dataImage)
 
     logger.info("Parsing Complete. Exporting...")
     dcStegoImage = dcStegoManager.getCarrierImage()
-    dcStegoImage.getPilImage().save(dcStegoImage.getImageName())
+
+    if outputFileName == "":
+        dcStegoImage.getPilImage().save(dcStegoImage.getImageName())
+    else:
+        dcStegoImage.getPilImage().save(outputFileName)
 
 elif mode == 'unstego':
 
@@ -63,7 +91,7 @@ elif mode == 'unstego':
     logger.info("UnStego Mode Selected. Fetching Images")
     carrierImage = DCImage(carrierImgDir)
 
-    dcStegoManager = DCStego(carrierImage)
+    dcStegoManager = DCStego(carrierImage, encryptionOffset)
     dcDataImage = dcStegoManager.parseDataPixelImage()
     #dcDataImage.decryptImage()
 

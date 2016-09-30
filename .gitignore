@@ -46,3 +46,4 @@ fabric.properties
 __pycache__/
 *.log
 .fuse*
+*~lock*
