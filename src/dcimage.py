@@ -53,5 +53,6 @@ class DCImage:
         # creates a plain ol' white image
         image = Image.new("RGB", (width, height), (0, 0, 0))
         image.save(savedir)
+        image.close()
 
         return DCImage(savedir)

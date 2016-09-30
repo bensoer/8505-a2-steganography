@@ -81,6 +81,10 @@ if mode == 'stego':
     else:
         dcStegoImage.getPilImage().save(outputFileName)
 
+    dcStegoImage.getPilImage().close()
+    dataImage.getPilImage().close()
+    carrierImage.getPilImage().close()
+
 elif mode == 'unstego':
 
     fh = logging.FileHandler("unstego.log")
@@ -97,6 +101,9 @@ elif mode == 'unstego':
 
     image = dcDataImage.getPilImage()
     image.save(dcDataImage.getImageName())
+    image.close()
+
+    carrierImage.getPilImage().close()
 
 else:
     logger.error("Stego - No Valid Option Selected. Please Try Again")
