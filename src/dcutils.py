@@ -7,7 +7,14 @@ logger = logging.getLogger("stego")
 class DCUtils:
     @staticmethod
     def isLargeEnoughImg(carrierImg, dataImg):
-
+        '''
+        isLargeEnoughImg is a helper method that determines if the passed in dataImg can be stored in the passed in
+        carrierImg. This method is used along with the calculateMaxStorageCapacity method to determine how much
+        space the carrierImg can store including its required headers
+        :param carrierImg: DCImage - The Carrier Image that will hold the data image
+        :param dataImg: DCImage - The data image that will be stored inot the carrier Img
+        :return: Boolean - True or false as to whether the carrierImg is large enough to store the dataImg
+        '''
         maxBytes, bitsNeeded = DCUtils.calculateMaxStorageCapacity(carrierImg)
 
         dwidth, dheight = dataImg.size
@@ -71,6 +78,14 @@ class DCUtils:
 
     @staticmethod
     def calculateMaxWidthAndHeight(maxDataBytes):
+        '''
+        calculateMaxWithAndHeight determins the max possible width or height an image could have given the passed in
+        dataBytes. Assuming an RGB image
+        :param maxDataBytes: Int - The number of bytes that make up the image being calculated for its max possible width
+        and height
+        :return: Tuple<int, int> - Contains the total number of pixels possible for the passed in bytes along with the
+        number of bits that would be needed to store that number
+        '''
 
         maxTotalWidthOrHeightPixels = math.ceil(maxDataBytes / 3)
 

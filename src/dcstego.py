@@ -15,6 +15,12 @@ class DCStego:
         self.__encryptionOffset = encryptionOffset
 
     def __getHeaderInformation(self):
+        '''
+        getHeaderInformation is a private helper method that parses out the required header tag placed at the
+        beginning of the stego carrier image. This header contains the size, height, widht and name information of
+        the data image that is being stored in the carreir
+        :return: Tuple<Int,Int,Int,Int,Int,String>
+        '''
 
         #get information about our carrier image
         maxBytes, bitsNeeded = DCUtils.calculateMaxStorageCapacity(self.__dcCarrierImage.getPilImage())
@@ -213,6 +219,16 @@ class DCStego:
         return (nx, ny, totalDataBytes, totalDataWidth, totalDataHeight, fileName)
 
     def __addHeaderInformation(self, totalDataBytes, totalWidthPixels, totalHeightPixels, fileName):
+        '''
+        addHeaderInformation is a private helper method that places a header into the carrier image so that the data
+        image can be retrieved by the program when it is parsed out. The header contains the total size, width, height
+        and name of the data file being stored in the carrier
+        :param totalDataBytes: Int - Number of total bytes which makes up the data image
+        :param totalWidthPixels: Int - Total number of pixels that make up the width of the image
+        :param totalHeightPixels: Int - Total number of pixels that make up the height of the image
+        :param fileName: String - The name of the data image file including extension
+        :return: Tuple<int,int> - The X, and Y coordinated of where to start adding the image data into the carreir
+        '''
 
         logger.debug(" -- PROCESING HEADER INFORMATION INTO CARRIER -- ")
         logger.debug("Total Bytes In Data Image Is: " + str(totalDataBytes) + ". This Number Will Be Placed Into The"
@@ -444,6 +460,7 @@ class DCStego:
                 carrierPixels[nx,ny] = carrierPixel
 
                 offsetInPixel = offsetInPixel + 1
+
                 if offsetInPixel == 3:
                     nx = nx +1
                     offsetInPixel = 0
@@ -470,6 +487,13 @@ class DCStego:
         return (nx, ny)
 
     def __encryptPixel(self, pixel):
+        '''
+        encryptPixel is a private helper method that applies a basic caesarcipher to the passed in pixel. This is
+        done by taking the RGB value fo the pixel and adding an offset value to the pixel. It is then corrected
+        to make sure it falls within the RGB value range of 0 - 255
+        :param pixel: Tuple<int,int,int> - Represents a pixel with an int representing the Red, Green, Blue values of an RGB pixel
+        :return: Tuple<int,int,int> - The encrypted pixel
+        '''
         pred, pgreen, pblue = pixel
 
         pred = pred + self.__encryptionOffset
@@ -489,6 +513,15 @@ class DCStego:
         return (pred, pgreen, pblue)
 
     def __decryptPixel(self, pixel):
+        '''
+        decryptPixel is a private helper method that applies a basic caesarcipher to the passed in pixel. This is done
+        by taking the RB value fo the pixel adn substracting an offset value from the pixe. It is then corrected
+        to make sure it falls within the RGB value range of 0 - 255. Assuming the pixel passed in was encrypted
+        the original pixel value will then ve successfuly restored
+        :param pixel:  Tuple<int,int,int> - Represents a pixel with an int representing the Red, Green, Blue values of
+        an RGB pixel
+        :return:  Tuple<int,int,int> - The decrypted pixel
+        '''
         pred, pgreen, pblue = pixel
 
         pred = pred - self.__encryptionOffset
@@ -507,7 +540,12 @@ class DCStego:
         return (pred, pgreen, pblue)
 
     def addDataPixelImage(self, dcDataImage):
-
+        '''
+        addDataPixelImage parses and encodes the passed in data image into the carrier image
+        :param dcDataImage: DCImage - A wrapper around an Image object representing a data image to be stored into
+        the carrier
+        :return:
+        '''
 
         carrierPixels = self.__dcCarrierImage.getPixelAccess()
         carrierHeight = self.__dcCarrierImage.getPilHeight()
@@ -603,7 +641,12 @@ class DCStego:
 
 
     def parseDataPixelImage(self):
-
+        '''
+        parseDataPixelImage parses a data image out of this image (being the assumed carrier). This is done by first
+        pulling out the header information of the image, after which the rest of the image data is parsed out and a
+        data image is then generated
+        :return: Image - the data image being stored in the carrier
+        '''
         carrierPixels = self.__dcCarrierImage.getPixelAccess()
         carrierHeight = self.__dcCarrierImage.getPilHeight()
         carrierWidth = self.__dcCarrierImage.getPilWidth()
@@ -703,4 +746,9 @@ class DCStego:
 
 
     def getCarrierImage(self):
+        '''
+        getCarrierImage fetches the stores carrier image in this class so that it can be saved to the file system
+        after it has either had a data image encoded into it or removed from it
+        :return: DCImage - A wrapper of an Image object representing an image
+        '''
         return self.__dcCarrierImage

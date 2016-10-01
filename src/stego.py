@@ -17,6 +17,11 @@ logger.addHandler(ch)
 
 
 def printHelp():
+    '''
+    printHelp is a helper method that simply prints out information on how to use the stego program and all of its flags
+    and options
+    :return:
+    '''
     logger.info("Image Steganography Program By Ben Soer")
     logger.info("-------------------------------")
     logger.info("Usage:")
